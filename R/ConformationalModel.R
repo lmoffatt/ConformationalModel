@@ -6,6 +6,10 @@
 
 
 
+
+
+
+
 #' Title
 #'
 #' @param conformational_changes
@@ -431,7 +435,7 @@ to_state_count <- function(scheme, state) {
   v_state = state$changes_state
   d = state$interactions_state$matrix_form
   d$conformational_state = v_state
-  d <- dplyr::group_by(d, dplyr::across(-id_domain))
+  d <- dplyr::group_by(d, dplyr::across(-"id_domain"))
   d <- dplyr::summarise(d, count = dplyr::n())
   return(d)
 }
@@ -503,7 +507,7 @@ to_state_conductance_count_old <- function(scheme, state) {
   for (i in seq_len(number_inter)) {
     pos_domains = v_inter$domains_ids[[i]]
     players_id = v_inter$players_ids[[i]]
-    for (k  in seq_len(length(pos_domains)) ){
+    for (k  in seq_len(length(pos_domains))) {
       includes_all = TRUE
       for (kk in seq_len(length(pos_domains[[k]]))) {
         includes_all = includes_all && (v_state[players_id[kk]] == 2)
@@ -752,7 +756,7 @@ conformational_transition_list <- function(scheme, states_and_index) {
             v_change_state[j],
           id_conformational_change = scheme$conformational_changes$id_conformational_change[j_change],
           conformational_change = scheme$conformational_changes$conformational_change[j_change],
-          conformational_interactions = dplyr::filter(j_state$interactions_state$list_form, id_domain ==
+          conformational_interactions = dplyr::filter(j_state$interactions_state$list_form, "id_domain" ==
                                                         j),
           conformational_transition_mulitplicity = 1
         )
@@ -839,11 +843,11 @@ calc_Qij <- function (interactions,
   chla <- trr$conformational_change
   id_chla <- trr$id_conformational_change
   conformational_interactions <- trr$conformational_interactions %>% dplyr::ungroup() %>%
-    dplyr::select (!id_domain)
-  st <- dplyr::select(standard_states, !id_conformational_change)
+    dplyr::select (!"id_domain")
+  st <- dplyr::select(standard_states, !"id_conformational_change")
   st$count = -st$count
   conformational_interactions <- dplyr::bind_rows(conformational_interactions, st) %>%
-    dplyr::group_by(id_interaction, pos_within_interaction) %>% dplyr::summarise(count =
+    dplyr::group_by("id_interaction", "pos_within_interaction") %>% dplyr::summarise(count =
                                                                                    sum(count)) %>% dplyr::filter(count != 0)
 
 
@@ -892,7 +896,7 @@ calc_Qij <- function (interactions,
 
     #   auto Maybe_i_Factor_pos =
     #     names[factor_la + "_" + std::to_string(factor_ipos)];
-    Factor_pos <- parameters[paste0(factor_la, "_", factor_ipos-1)]
+    Factor_pos <- parameters[paste0(factor_la, "_", factor_ipos - 1)]
 
 
     #   if (!Maybe_i_Factor || !Maybe_i_Factor_pos)
@@ -1004,19 +1008,100 @@ make_Q0_Qa <- function(model, parameters) {
 
 
 
+#' Title
+#'
+#' @param scheme
+#' @param parameters
+#' @param conductance_count
+#' @param conductance_info
+#'
+#' @return
+#' @export
+#'
+#' @examples
+calc_gi <- function(scheme,
+                    parameters,
+                    conductance_count,
+                    conductance_info)
+{
+  mult = conductance_info$kind
+  out = 0.0
+  if (mult != "additive")
+    out = 1.0
+
+  for (i in seq_len(nrow(conductance_count))) {
+    i_lab <- conductance_count$id_conductance_interaction[i]
+    lab <- scheme$conductaces$conformational_interaction[i_lab]
+    n <-conductance_count$count[i]
+    par <- parameters[lab]
+    out <- ifelse (mult == "additive", out + par * n, out * par ^ n)
+  }
+  if (mult == "equilibrium")
+  {
+    le_lab <- conductance_info$leakeage_label
+    le <- parameters[le_lab]
+    out <- (le * out) / (1 + le * out)
+  }
+  return(out)
+}
 
 
+
+
+#' Title
+#'
+#' @param model
+#' @param parameters
+#'
+#' @return
+#' @export
+#'
+#' @examples
+make_g <- function (model, parameters) {
+  N <- length(model$states_and_index$id_state)
+  v_conductance <- model$scheme$conductaces
+
+
+  v_states = model$states_and_index$conformational_states
+
+  v_scheme = model$scheme
+
+  stopifnot(length(v_states) == N)
+
+  v_g <- matrix(data = 0,
+                nrow = N,
+                ncol = 1)
+
+  cond_info = model$conductance_info
+
+  for (i in seq_len(N)) {
+    #v_cond_map = get<Conductance_state_count>(v_states()[i]);
+    v_cond_map <- v_states[[i]]$state_conductance
+
+    gi <- calc_gi (model$scheme, parameters, v_cond_map, cond_info)
+    v_g[i, 1] <- gi
+
+  }
+  return (v_g)
+
+}
+
+
+
+
+
+#' Title
+#'
+#' @param model
+#' @param parameters
+#'
+#' @return
+#' @export
+#'
+#' @examples
 make_model <- function (model, parameters)
 {
-  Q0Qa = make_Q0_Qa(model, parameters)
-
-  # g = impl::make_g<Id>(model, names, p);
-  # if (!Maybe_Q0Qa || !Maybe_g)
-  #   return error_message(Maybe_Q0Qa.error()() + Maybe_g.error()());
-  # else {
-  #   auto [v_Q0, v_Qa] = std::move(Maybe_Q0Qa.value());
-  #   auto v_g = std::move(Maybe_g.value());
-  #
-  #   return std::tuple(std::move(v_Q0), std::move(v_Qa), std::move(v_g));
-  # }
+  Q0Qa <- make_Q0_Qa(model, parameters)
+  g <- make_g(model, parameters);
+  return (list(Q0=Q0Qa$Q0,Qa=Q0Qa$Qa,g=g))
 }
