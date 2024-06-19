@@ -48,8 +48,12 @@ domain ids:
 interactions <- conformationalInteractions(
   labels = c("RB", "BR", "RBR"),
   players_ids = list(c(2, 1), c(1, 2), c(2, 1, 2)),
-  domains_ids =
-    list(list(c(6, 1), c(2, 3), c(4, 5)), list(c(1, 2), c(3, 4), c(5, 6)), list(c(6, 1, 2), c(2, 3, 4), c(4, 5, 6)))
+  domains_ids =list(
+    list(c(6, 1), c(2, 3), c(4, 5)), 
+    list(c(1, 2), c(3, 4), c(5, 6)), 
+    list(c(6, 1, 2), c(2, 3, 4), c(4, 5, 6)
+         )
+    )
 )
 ```
 
