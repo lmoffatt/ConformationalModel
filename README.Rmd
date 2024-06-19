@@ -1,0 +1,119 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# ConformationalModel
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of ConformationalModel is to build kinetic models of ion channel receptors based on the interactions of conformational domains. 
+
+
+
+
+## Installation
+
+You can install the development version of ConformationalModel from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("lmoffatt/ConformationalModel")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+library(ConformationalModel)
+
+
+
+
+```
+
+lets define the conformational changes and its organization in domains
+
+```{r}
+
+changes <- conformationalChanges(
+  conformational_changes = c("Binding", "Rocking"),
+  agonists = c("ATP", "")
+)
+
+
+domains <- conformationaldomains(c(1, 2, 1, 2, 1, 2))
+
+```
+
+
+
+now define the interactions using the conformational changes ids and the domain ids: 
+
+```{r}
+interactions <- conformationalInteractions(
+  labels = c("RB", "BR", "RBR"),
+  players_ids = list(c(2, 1), c(1, 2), c(2, 1, 2)),
+  domains_ids = list(list(c(6, 1), c(2, 3), c(4, 5)), list(c(1, 2), c(3, 4), c(5, 6)), list(c(6, 1, 2), c(2, 3, 4), c(4, 5, 6)))
+)
+
+```
+
+
+
+we define the conductance interactions in the same way and the function that translate the conductance interactions to a defined interaction: 
+```{r}
+
+conductances <- conductanceInteractions(
+  labels = c("Rocking_Current_factor"),
+  players_ids = list(c(2)),
+  domains_ids = list(list(c(2),c(4),c(6)))
+)
+
+conductance_info<-conductanceInteractionInfo(id_conductance_interaction = 1,kind = "equilibrium", leakeage_label = "Leakeage_current_ratio")
+
+```
+
+
+finally we define the standard states for some  conformational changes in terms of interactions of those standard states
+```{r}
+
+standard_states <- standardStates(id_conformational_change = c(2,2,2,2),id_interaction = c(1,2,3,3) ,pos_within_interaction = c(1,2,1,3) ,count =c(1,1,1,1) )
+
+```
+
+
+
+
+with all this information we define a conformational model: 
+
+
+```{r}
+model=ConformationalModel(changes,domains, interactions,conductances,
+                                standard_states,
+                                conductance_info)
+
+```
+
+
+
+now we define each one of the model parameters and we calculate the rates for those parameters
+```{r}
+parameters=c(Binding_on=10.0,Binding_off=10000,Rocking_on=10000,Rocking_off=100,RB=10, RB_0 =1,RB_1= 1, BR=10, BR_0=1, BR_1=1,RBR= 1, RBR_0=1, RBR_1=1, RBR_2=1, Rocking_Current_factor=10, Leakeage_current_ratio=1e-6)
+
+
+m = make_model(model, parameters)
+m
+```

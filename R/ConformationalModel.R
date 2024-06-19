@@ -10,6 +10,7 @@
 
 
 
+
 #' Title
 #'
 #' @param conformational_changes
@@ -19,9 +20,7 @@
 #' @export
 #'
 #' @examples
-conformationalChanges <- function(conformational_changes,
-                                  conformational_labels,
-                                  agonists) {
+conformationalChanges <- function(conformational_changes, agonists) {
   return (
     data.frame(
       id_conformational_change = 1:length(conformational_changes),
@@ -756,8 +755,11 @@ conformational_transition_list <- function(scheme, states_and_index) {
             v_change_state[j],
           id_conformational_change = scheme$conformational_changes$id_conformational_change[j_change],
           conformational_change = scheme$conformational_changes$conformational_change[j_change],
-          conformational_interactions = dplyr::filter(j_state$interactions_state$list_form, "id_domain" ==
-                                                        j),
+          conformational_interactions = dplyr::filter(
+            j_state$interactions_state$list_form,
+            "id_domain" ==
+              j
+          ),
           conformational_transition_mulitplicity = 1
         )
       }
@@ -847,8 +849,8 @@ calc_Qij <- function (interactions,
   st <- dplyr::select(standard_states, !"id_conformational_change")
   st$count = -st$count
   conformational_interactions <- dplyr::bind_rows(conformational_interactions, st) %>%
-    dplyr::group_by("id_interaction", "pos_within_interaction") %>% dplyr::summarise(count =
-                                                                                   sum(count)) %>% dplyr::filter(count != 0)
+    dplyr::group_by(id_interaction, pos_within_interaction) %>% dplyr::summarise(count =
+                                                                                       sum(count)) %>% dplyr::filter(count != 0)
 
 
   #   get<Conformational_interactions_domain_state>(tr()) - st[chla];
@@ -980,10 +982,10 @@ make_Q0_Qa <- function(model, parameters) {
       #   Maybe_qij = calc_Qij<Id>(inter, names, par, trr);
 
       v_qij = calc_Qij(
-        scheme$interactions,
+        model$scheme$interactions,
         parameters = parameters,
         trr = trr,
-        standard_states = standard_states
+        standard_states = model$standard_states
       )
 
       if (trr$agonist_dependency == "" || d < 0) {
@@ -1032,7 +1034,7 @@ calc_gi <- function(scheme,
   for (i in seq_len(nrow(conductance_count))) {
     i_lab <- conductance_count$id_conductance_interaction[i]
     lab <- scheme$conductaces$conformational_interaction[i_lab]
-    n <-conductance_count$count[i]
+    n <- conductance_count$count[i]
     par <- parameters[lab]
     out <- ifelse (mult == "additive", out + par * n, out * par ^ n)
   }
@@ -1102,6 +1104,7 @@ make_g <- function (model, parameters) {
 make_model <- function (model, parameters)
 {
   Q0Qa <- make_Q0_Qa(model, parameters)
-  g <- make_g(model, parameters);
-  return (list(Q0=Q0Qa$Q0,Qa=Q0Qa$Qa,g=g))
+  g <- make_g(model, parameters)
+
+  return (list(Q0 = Q0Qa$Q0, Qa = Q0Qa$Qa, g = g))
 }
