@@ -1,0 +1,172 @@
+---
+title: "scheme_11_internals"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{scheme_11_internals}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ConformationalModel)
+
+```
+
+
+
+lets define the conformational changes: 
+
+```{r}
+
+changes <- conformationalChanges(
+  conformational_changes = c("Binding", "Rocking"),
+  agonists = c("ATP", "")
+)
+
+```
+
+lets define the domains
+```{r}
+
+domains <- conformationaldomains(c(1, 2, 1, 2, 1, 2))
+
+```
+
+
+
+now define the interactions: 
+```{r}
+interactions <- conformationalInteractions(
+  labels = c("RB", "BR", "RBR"),
+  players_ids = list(c(2, 1), c(1, 2), c(2, 1, 2)),
+  domains_ids = list(list(c(6, 1), c(2, 3), c(4, 5)), list(c(1, 2), c(3, 4), c(5, 6)), list(c(6, 1, 2), c(2, 3, 4), c(4, 5, 6)))
+)
+
+```
+
+
+
+define the conductance interactions: 
+```{r}
+
+conductances <- conductanceInteractions(
+  labels = c("Rocking_Current_factor"),
+  players_ids = list(c(2)),
+  domains_ids = list(list(c(2),c(4),c(6)))
+)
+
+```
+
+
+define other conductance information
+
+```{r}
+conductance_info<-conductanceInteractionInfo(id_conductance_interaction = 1,kind = "equilibrium", leakeage_label = "Leakeage_current_ratio")
+
+```
+
+
+define the standard states for the conformational changes
+```{r}
+
+standard_states <- standardStates(id_conformational_change = c(2,2,2,2),id_interaction = c(1,2,3,3) ,pos_within_interaction = c(1,2,1,3) ,count =c(1,1,1,1) )
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+scheme<-conformationalModelScheme(conformational_changes = changes,domains = domains,interactions = interactions,conductaces = conductances)
+```
+
+
+
+```{r}
+state= conformationalChangeState(scheme = scheme,expanded_state_number = 11)
+state
+```
+
+
+
+```{r}
+state=conformationalState(scheme,1)
+state
+```
+
+
+```{r}
+state_13= conformationalChangeState(scheme = scheme,expanded_state_number = 14)
+state_13
+```
+
+
+
+```{r}
+state_interaction_13=conformationalInteractionState(scheme,state_13)
+state_interaction_13
+```
+
+```{r}
+
+state_count<-to_state_count(scheme,state)
+state_count
+
+```
+```{r}
+state_conductance<-to_state_conductance_count(scheme,state_13)
+state_conductance
+```
+```{r}
+
+states_and_index<-conformational_states_and_index(scheme = scheme)
+states_and_index
+
+```
+
+
+
+
+```{r}
+transition_list <- conformational_transition_list(scheme, states_and_index) 
+transition_list
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+model=ConformationalModel(changes,domains, interactions,conductances,
+                                standard_states,
+                                conductance_info)
+
+model
+```
+```{r}
+parameters=c(Binding_on=10.0,Binding_off=10000,Rocking_on=10000,Rocking_off=100,RB=10, RB_0 =1,RB_1= 1, BR=10, BR_0=1, BR_1=1,RBR= 1, RBR_0=1, RBR_1=1, RBR_2=1, Rocking_Current_factor=10, Leakeage_current_ratio=1e-6)
+
+
+m = make_model(model, parameters)
+m
+```
+
+

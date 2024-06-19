@@ -15,4 +15,5 @@ Suggests:
 VignetteBuilder: knitr
 Imports: 
     magrittr,
+    purrr,
     tidyr
