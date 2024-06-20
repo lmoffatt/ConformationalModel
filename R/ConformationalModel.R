@@ -781,6 +781,56 @@ conformational_transition_list <- function(scheme, states_and_index) {
 
 
 
+#' Title
+#'
+#' @param scheme
+#' @param states_and_index
+#'
+#' @return
+#' @export
+#'
+#' @examples
+Domain_states <- function(scheme, states_and_index)
+{
+
+  num_conformational_changes <- nrow(scheme$conformational_changes)
+  conformational_changes_list<-scheme$conformational_changes$conformational_change
+  num_domains <- nrow(scheme$domains)
+  num_states <- length(states_and_index$conformational_states)
+
+  id_states<-states_and_index$id_state
+
+  stopifnot("more than 2 conformational changes, future releases will cover more changes" = num_conformational_changes <
+              3)
+
+
+
+  domain_state <- purrr::reduce(id_states, function(x, i)
+    c(
+      x,
+      states_and_index$conformational_states[[i]]$state_vector$changes_state
+    ), .init = c())
+
+  id_state <- rep(id_states, each = num_domains)
+
+  dstates <- data.frame(id_state, dplyr::left_join(scheme$domains, scheme$conformational_changes), domain_state)
+
+  n_states<-dstates %>% dplyr::group_by(id_state, conformational_change) %>%
+    dplyr::summarise(n =sum(domain_state - 1)) %>%
+    tidyr::pivot_wider(names_from =   conformational_change, values_from = n)%>%
+    dplyr::arrange(dplyr::across(all_of(conformational_changes_list)))%>%
+    dplyr::ungroup()%>%dplyr::add_count(across(all_of(conformational_changes_list)))
+
+
+  n_states$id_sub_state<-purrr::reduce(2:num_states,function(x,i)
+    c(x, ifelse(all(n_states[conformational_changes_list][i,]==n_states[conformational_changes_list][i-1,]),
+                x[length(x)]+1,1)),.init = c(1))
+
+
+
+
+  return (dplyr::left_join(n_states,dstates, by = "id_state"))
+}
 
 
 
@@ -815,6 +865,7 @@ ConformationalModel <- function(conformational_changes,
     list(
       scheme = scheme,
       states_and_index = states_and_index,
+      domain_states = Domain_states(scheme = scheme, states_and_index = states_and_index),
       transitions = transitions,
       standard_states = standard_states,
       conductance_info = conductance_info

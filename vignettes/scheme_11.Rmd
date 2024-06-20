@@ -94,8 +94,12 @@ parameters=c(Binding_on=10.0,Binding_off=10000,Rocking_on=10000,Rocking_off=100,
 m = make_model(model, parameters)
 m
 ```
+
+
+
+
 ```{r}
-ggplot2::ggplot() + g_ConformationalStates(model,1:24)
+g_ConformationalStates(model,1:24)
 ```
 
 
