@@ -99,7 +99,13 @@ m
 
 
 ```{r}
-g_ConformationalStates(model,1:24)
+
+n_states=g_ConformationalStates_data(model,1:24)
+g_ConformationalStates(n_states)
 ```
 
+
+```{r}
+g_States_and_Rates(model, m$Q0, m$Qa, 1:24)
+```
 
