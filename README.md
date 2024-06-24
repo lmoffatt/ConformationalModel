@@ -7,7 +7,20 @@
 <!-- badges: end -->
 
 The goal of ConformationalModel is to build kinetic models of ion
-channel receptors based on the interactions of conformational domains.
+channel receptors based on the interactions of conformational domains. 
+This package allow the user to build a predictive kinetic model of an 
+ion channel receptor based on structural and functional considereations. 
+Specifically it considers 
+1. a  numbered list of domains that can undergo a conformational
+change or bind an agonist. 
+2. a list of interactions between those domains. Each interaction is defined
+by the list of conformational changes that involves and possible combianations
+of domains (defiened by its numbers) that each interaction involve.
+3. A list of interactions that defines the changes in conductance of the ion channel.
+
+As an example we present a kinetic scheme for the opening of a purinergir receptor by 
+binding ATP
+
 
 ## Installation
 
